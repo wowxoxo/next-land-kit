@@ -1,19 +1,19 @@
-/// <reference types="vitest" />
-
 import { dependencies, peerDependencies } from './package.json'
 
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 import dts from 'vite-plugin-dts'
 import react from '@vitejs/plugin-react'
 import { resolve } from 'path'
+import { visualizer } from 'rollup-plugin-visualizer'
 
 export default defineConfig({
   plugins: [
     react(),
     dts({
       include: ['src/**/*'],
-      exclude: ['**/*.test.ts', '**/*.stories.tsx'],
+      exclude: ['src/**/*.test.ts', 'src/**/*.stories.tsx'],
     }),
+    // visualizer({ open: true }),
   ],
   resolve: {
     alias: {
@@ -22,26 +22,31 @@ export default defineConfig({
   },
   build: {
     lib: {
-      entry: resolve(__dirname, 'src', 'index.ts'),
-      formats: ['es', 'cjs'],
+      entry: resolve(__dirname, 'src/index.ts'),
+      formats: ['es'],
       fileName: (format) => `index.${format}.js`,
     },
     rollupOptions: {
       external: [
+        'react',
+        'react-dom',
         ...Object.keys(peerDependencies || {}),
         ...Object.keys(dependencies || {}),
       ],
       output: {
         preserveModules: true,
         exports: 'named',
+        globals: {
+          react: 'React',
+          'react-dom': 'ReactDOM',
+        },
       },
     },
-    sourcemap: true,
     target: 'esnext',
+    sourcemap: true,
   },
   test: {
     globals: true,
-    environment: 'node',
-    include: ['src/**/*.test.ts'],
+    environment: 'jsdom',
   },
 })
