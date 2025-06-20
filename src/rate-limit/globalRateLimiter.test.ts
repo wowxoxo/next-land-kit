@@ -1,9 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
+import { __resetRateMapForTests, globalRateLimiter } from './globalRateLimiter'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { TelegramAppContext } from '../telegram/telegram.service'
 import { createMocks } from 'node-mocks-http'
-import { globalRateLimiter } from './globalRateLimiter'
 
 const context: TelegramAppContext = {
   appName: 'TestApp',
@@ -27,6 +27,7 @@ describe('globalRateLimiter', () => {
   afterEach(() => {
     vi.useRealTimers()
     vi.resetAllMocks()
+    __resetRateMapForTests()
   })
 
   const createReqRes = () => {

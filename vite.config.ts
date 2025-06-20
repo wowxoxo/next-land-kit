@@ -1,3 +1,5 @@
+/// <reference types="vitest" />
+
 import { dependencies, peerDependencies } from './package.json'
 
 import { defineConfig } from 'vite'
@@ -39,6 +41,7 @@ export default defineConfig({
   },
   test: {
     globals: true,
-    environment: 'jsdom',
+    environment: 'node',
+    include: ['src/**/*.test.ts'],
   },
 })

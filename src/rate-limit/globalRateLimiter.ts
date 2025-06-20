@@ -49,6 +49,11 @@ export const globalRateLimiter = async (
     return
   }
 
+  res.status(200) // ✅ explicitly mark success, not sure if this is needed
   next()
 }
 
+export const __resetRateMapForTests = () => {
+    globalRequestCounter = 0
+    globalWindowStart = Date.now()
+  }
