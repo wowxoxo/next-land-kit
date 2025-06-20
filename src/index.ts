@@ -1,6 +1,7 @@
 // export * from './context/CsrfContext'
 export * from './hooks/useFetch'
 export * from './http/csrf'
+export * from './http/api.service'
 export * from './mail/email.service'
 export * from './rate-limit/applyRateLimit'
 export * from './rate-limit/globalRateLimiter'

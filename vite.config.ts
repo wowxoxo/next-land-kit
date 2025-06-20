@@ -13,7 +13,7 @@ export default defineConfig({
       include: ['src/**/*'],
       exclude: ['src/**/*.test.ts', 'src/**/*.stories.tsx'],
     }),
-    // visualizer({ open: true }),
+    visualizer({ open: false }),
   ],
   resolve: {
     alias: {
