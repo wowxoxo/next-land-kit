@@ -1,4 +1,5 @@
 // export * from './context/CsrfContext'
+export * from './globalConfig'
 export * from './hooks/useFetch'
 export * from './http/csrf'
 export * from './http/api.service'

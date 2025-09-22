@@ -16,6 +16,8 @@ export const errorConstructor = (error: unknown) => {
     } else if ((error as AxiosError).response?.status == 423) {
       errorMessage =
         'Произошла ошибка при отправке. Ошибка доступа к базе данных. Попробуйте позже'
+    } else if ((error as AxiosError).response?.status == 535) {
+      errorMessage = 'Произошла ошибка при отправке письма. Попробуйте позже'
     } else {
       errorMessage = 'Произошла ошибка при отправке. Попробуйте позже'
     }

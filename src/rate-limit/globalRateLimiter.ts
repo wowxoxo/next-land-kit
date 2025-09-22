@@ -2,7 +2,6 @@ import { ErrorType, formatErrorMsg, sendErrorToTG } from '@/telegram/telegram.se
 import type { NextApiRequest, NextApiResponse } from 'next'
 
 import type { ILogger } from '@/types/logger'
-import type { TelegramAppContext } from '@/telegram/telegram.service'
 
 let globalRequestCounter = 0
 let globalWindowStart = Date.now()
@@ -10,7 +9,6 @@ let globalWindowStart = Date.now()
 export interface GlobalLimiterOptions {
   limit: number
   windowMs: number
-  context: TelegramAppContext
   logger?: ILogger
 }
 
@@ -23,7 +21,7 @@ export const globalRateLimiter = async (
   next: () => void,
   options: GlobalLimiterOptions
 ): Promise<void> => {
-  const { limit, windowMs, context, logger = console } = options
+  const { limit, windowMs, logger = console } = options
   const now = Date.now()
 
   if (now - globalWindowStart > windowMs) {
@@ -39,9 +37,8 @@ export const globalRateLimiter = async (
         type: ErrorType.error,
         title: `Global limit exceeded: ${limit} requests per ${windowMs / 60000} min`,
       },
-      context
     )
-    await sendErrorToTG(errMsg, undefined, undefined, logger)
+    await sendErrorToTG(errMsg)
 
     res.status(429).json({
       message: 'Too many requests globally. Please try again later.',

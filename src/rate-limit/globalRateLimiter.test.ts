@@ -2,13 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import { __resetRateMapForTests, globalRateLimiter } from './globalRateLimiter'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import type { TelegramAppContext } from '../telegram/telegram.service'
 import { createMocks } from 'node-mocks-http'
-
-const context: TelegramAppContext = {
-  appName: 'TestApp',
-  env: 'test',
-}
 
 describe('globalRateLimiter', () => {
   let nextFn: ReturnType<typeof vi.fn>
@@ -47,7 +41,6 @@ describe('globalRateLimiter', () => {
     await globalRateLimiter(req, res, nextFn, {
       limit: 2,
       windowMs: 10000,
-      context,
       logger,
     })
 
@@ -61,7 +54,6 @@ describe('globalRateLimiter', () => {
     const opts = {
       limit: 1,
       windowMs: 10000,
-      context,
       logger,
     }
 
@@ -82,7 +74,6 @@ describe('globalRateLimiter', () => {
     const opts = {
       limit: 1,
       windowMs: 10000,
-      context,
       logger,
     }
 

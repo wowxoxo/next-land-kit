@@ -1,20 +1,38 @@
-import { ErrorType, TelegramAppContext, formatErrorMsg, sendErrorToTG } from '@/telegram/telegram.service'
+import { ErrorType, formatErrorMsg, formatSuccessMsg, sendErrorToTG } from '@/telegram/telegram.service'
 
 import type { ILogger } from '@/types/logger'
+import { MailOptions } from 'nodemailer/lib/smtp-transport'
 import nodemailer from 'nodemailer'
+import { saveFailedEmail } from './failedEmailsDB.service'
 
-interface MailConfig {
+class SimulatedSmtpSendingError extends Error {
+  constructor(address: string) {
+    super(`Simulated SMTP sending failure triggered by ${address}`)
+    this.name = 'SimulatedSmtpSendingError'
+  }
+}
+
+class SimulatedFailedEmailPersistenceError extends Error {
+  constructor(address: string) {
+    super(`Simulated failed email persistence triggered by ${address}`)
+    this.name = 'SimulatedFailedEmailPersistenceError'
+  }
+}
+
+export interface MailConfig {
+  from?: MailOptions['from']
   to: string[]
   cc?: string | string[]
   bcc?: string | string[]
   subject: string
   message: string
+  attachments?: MailOptions['attachments']
 }
 
 interface EmailServiceOptions {
   transport?: ReturnType<typeof nodemailer.createTransport>
-  context: TelegramAppContext
   logger?: ILogger
+  saveOnFail?: boolean
 }
 
 /**
@@ -22,7 +40,6 @@ interface EmailServiceOptions {
  */
 export const checkTransport = async (
   transport: ReturnType<typeof nodemailer.createTransport>,
-  context: TelegramAppContext,
   logger: ILogger = console
 ) => {
   try {
@@ -35,12 +52,21 @@ export const checkTransport = async (
         type: ErrorType.warning,
         title: 'Unable to connect to email server',
         error: error instanceof Error ? error : String(error),
-      },
-      context
+      }
     )
-    await sendErrorToTG(errMsg, undefined, undefined, logger)
+    await sendErrorToTG(errMsg)
   }
 }
+
+const prepareMessage = (mailConfig: MailConfig): MailOptions => ({
+  from: mailConfig.from,
+  to: mailConfig.to,
+  cc: mailConfig.cc,
+  bcc: mailConfig.bcc,
+  subject: mailConfig.subject,
+  html: mailConfig.message,
+  attachments: mailConfig.attachments,
+})
 
 /**
  * Sends an HTML email with fallback logging + Telegram error alert.
@@ -48,8 +74,8 @@ export const checkTransport = async (
 export const sendEmail = async (
   config: MailConfig,
   options: EmailServiceOptions
-): Promise<void> => {
-  const { transport, context, logger = console } = options
+): Promise<boolean> => {
+  const { transport, logger = console } = options
 
   const email = {
     from: process.env.EMAIL_FROM || 'no-reply@example.com',
@@ -60,13 +86,28 @@ export const sendEmail = async (
     html: config.message,
   }
 
+  const { saveOnFail = false } = options
+  const msg = prepareMessage(config)
+  const mailConfig = config
+
   try {
     if (!transport) {
         logger.warn?.('No transport provided to sendEmail()')
-        return
+        throw new Error('No transport provided to sendEmail()')
+        // return false
       }
+
+      if (
+        mailConfig.to.length === 1 &&
+        (mailConfig.to[0] === 'smtp-sending-error@test.com' ||
+          mailConfig.to[0] === 'smtp-save-failed-error@test.com')
+      ) {
+        throw new SimulatedSmtpSendingError(config.to[0])
+      }
+
     await transport.sendMail(email)
-    logger.info?.(`Email sent to ${config.to.join(', ')}`)
+    logger.info?.(`Email sent to ${mailConfig.to.join(', ')}`)
+    return true
   } catch (error) {
     logger.error?.(`Error sending email: ${(error as Error).message}`)
     logger.error?.(JSON.stringify(email))
@@ -77,8 +118,49 @@ export const sendEmail = async (
         title: 'Error sending email',
         error: error instanceof Error ? error : String(error),
       },
-      context
     )
-    await sendErrorToTG(errMsg, undefined, undefined, logger)
+    await sendErrorToTG(errMsg)
+
+    console.log('saveOnFail', saveOnFail)
+    if (saveOnFail) {
+      logger.info?.('saving failed email for resending')
+      try {
+        const fromAddress =
+          (typeof msg.from === 'string' && msg.from) ||
+          (typeof mailConfig.from === 'string' && mailConfig.from) ||
+          ''
+
+        if (
+          mailConfig.to.length === 1 &&
+          mailConfig.to[0] === 'smtp-save-failed-error@test.com'
+        ) {
+          throw new SimulatedFailedEmailPersistenceError(mailConfig.to[0])
+        }
+
+        await saveFailedEmail({
+          from: fromAddress,
+          to: mailConfig.to,
+          cc: mailConfig.cc,
+          bcc: mailConfig.bcc,
+          subject: mailConfig.subject,
+          message: mailConfig.message,
+          attachments: mailConfig.attachments,
+        })
+        logger.info?.('successfully saved failed email for resending')
+        
+        const successMsg  = formatSuccessMsg('Failed email successfully saved and ready to resend', undefined)
+        await sendErrorToTG(successMsg)
+      } catch (savingError) {
+        logger.error?.('error saving failed emails to DB')
+        const errMsgSaving = formatErrorMsg({
+          type: ErrorType.error,
+          title: 'Error occurs through saving failed email',
+          error: (savingError as Error).message,
+        })
+        await sendErrorToTG(errMsgSaving)
+      }
+    }
+
+    return false
   }
 }
