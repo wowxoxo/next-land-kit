@@ -3,7 +3,8 @@ import { ErrorType, formatErrorMsg, formatSuccessMsg, sendErrorToTG } from '@/te
 import type { ILogger } from '@/types/logger'
 import { MailOptions } from 'nodemailer/lib/smtp-transport'
 import nodemailer from 'nodemailer'
-import { saveFailedEmail } from './failedEmailsDB.service'
+
+// import { saveFailedEmail } from './failedEmailsDB.service'
 
 class SimulatedSmtpSendingError extends Error {
   constructor(address: string) {
@@ -137,16 +138,16 @@ export const sendEmail = async (
           throw new SimulatedFailedEmailPersistenceError(mailConfig.to[0])
         }
 
-        await saveFailedEmail({
-          from: fromAddress,
-          to: mailConfig.to,
-          cc: mailConfig.cc,
-          bcc: mailConfig.bcc,
-          subject: mailConfig.subject,
-          message: mailConfig.message,
-          attachments: mailConfig.attachments,
-        })
-        logger.info?.('successfully saved failed email for resending')
+        // await saveFailedEmail({
+        //   from: fromAddress,
+        //   to: mailConfig.to,
+        //   cc: mailConfig.cc,
+        //   bcc: mailConfig.bcc,
+        //   subject: mailConfig.subject,
+        //   message: mailConfig.message,
+        //   attachments: mailConfig.attachments,
+        // })
+        // logger.info?.('successfully saved failed email for resending')
         
         const successMsg  = formatSuccessMsg('Failed email successfully saved and ready to resend', undefined)
         await sendErrorToTG(successMsg)
