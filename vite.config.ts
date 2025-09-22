@@ -12,7 +12,7 @@ export default defineConfig({
     react(),
     nodePolyfills({
       // Include the necessary Node.js built-ins
-      include: ['url', 'fs', 'path', 'buffer'],
+      include: ['url'],
     }),
     dts({
       include: ['src/**/*'],
