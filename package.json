@@ -25,6 +25,7 @@
     "express-slow-down": "1.6.0",
     "lowdb": "4.0.0",
     "nodemailer": "^6.9.0",
+    "vite-plugin-node-polyfills": "^0.24.0",
     "winston": "^3.9.0"
   },
   "devDependencies": {
