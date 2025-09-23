@@ -59,7 +59,7 @@ export const checkTransport = async (
     const errMsg = formatErrorMsg({
       type: ErrorType.warning,
       title: 'Unable to connect to email server',
-      error: error instanceof Error ? error : String(error),
+      error: String(error),
     })
     await sendErrorToTG(errMsg)
   }
@@ -117,6 +117,7 @@ export const sendEmail = async (
     logger.error?.(`Error sending email: ${(error as Error).message}`)
     logger.error?.(JSON.stringify(email))
 
+    console.log('error details', error)
     const errMsg = formatErrorMsg({
       type: ErrorType.sending,
       title: 'Error sending email',

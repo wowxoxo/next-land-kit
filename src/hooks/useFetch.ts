@@ -19,7 +19,7 @@ export const useFetch = <Args extends any[]>(
         await applyFn(...args)
       } catch (err) {
         setError(
-          err instanceof Error ? err.message : 'Something went wrong!'
+          err instanceof Error ? err.message : 'Произошла непредвиденная ошибка при выполнении запроса'
         )
       } finally {
         setIsLoading(false)
