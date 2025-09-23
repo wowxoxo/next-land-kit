@@ -1,6 +1,6 @@
 {
   "name": "@iit/next-land-kit",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "description": "Reusable TypeScript utilities for Next.js and React projects",
   "main": "dist/index.cjs.js",
   "module": "dist/index.es.js",
